@@ -28,6 +28,9 @@ classDiagram
     class AllergenNuts {
         +hasNuts() boolean
     }
+    class DishFactory {
+        +createDish(type: string, ingredients: string[]): Dish
+    }
 
     class Customer {
         +constructor(name: string)
@@ -42,4 +45,10 @@ classDiagram
         +addDish(dish: Dish): void
         +removeDish(dish: Dish): void
         +getTotalPrice() number
+    }
+    class OrderFactory {
+        +createOrder(customer: Customer): Order
+    }
+    class CustomerFactory {
+        +createCustomer(name: string): Customer
     }

@@ -33,7 +33,7 @@ class Brownie extends Dish implements AllergenGluten, AllergenNuts {
     hasNuts(): boolean { return true }
 }
 
-class dishFactory {
+class DishFactory {
     static createDish(dishType: string, ingredients: string[]): Dish {
         switch (dishType) {
             case "CheeseBurger":
@@ -48,8 +48,8 @@ class dishFactory {
     }
 }
 
-const myCheeseBurger = dishFactory.createDish("CheeseBurger", ["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
-const mySalad = dishFactory.createDish("Salad", ["laitue", "tomate", "concombre", "vinaigrette"]);
+const myCheeseBurger = DishFactory.createDish("CheeseBurger", ["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
+const mySalad = DishFactory.createDish("Salad", ["laitue", "tomate", "concombre", "vinaigrette"]);
 
 console.log(mySalad.showIngredients())
 console.log(myCheeseBurger.showPrice());
@@ -59,9 +59,6 @@ class Customer {
     getname(): string {
         return this.name;
     }
-    createOrder(): Order {
-        return new Order(this);
-    }
     addDishToOrder(order: Order, dish: Dish): void {
         order.addDish(dish);
     }
@@ -70,6 +67,12 @@ class Customer {
     }
     getOrderTotalPrice(order: Order): number {
         return order.getTotalPrice();
+    }
+}
+
+class CustomerFactory {
+    static createCustomer(name: string): Customer {
+        return new Customer(name);
     }
 }
 
@@ -84,8 +87,6 @@ enum OrderStatusEnum {
 interface OrderStatus {
     status: OrderStatusEnum;
 }
-
-// faire orderfactory qui associe un client à une commande
 
 class Order implements OrderStatus {
     dishes: Dish[] = [];
@@ -107,11 +108,22 @@ class Order implements OrderStatus {
     }
 }
 
-// créer un setter pour modifier le status de la commande
+class OrderFactory {
+    static createOrder(customer: Customer): Order {
+        return new Order(customer);
+    }
+}
 
-const customer = new Customer("Alice");
+// Setter pour modifier le status de la commande :
+class UpdateOrderStatus {
+    static updateStatus(order: Order, status: OrderStatusEnum): void {
+        order.status = status;
+    }
+}
+
+const customer = CustomerFactory.createCustomer("Alice");
 console.log(customer);
-const order = customer.createOrder();
+const order = OrderFactory.createOrder(customer);
 console.log(order);
 const burger = new CheeseBurger(["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
 console.log(burger);
