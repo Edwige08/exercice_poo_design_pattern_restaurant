@@ -1,0 +1,45 @@
+classDiagram
+    Dish <|-- CheeseBurger
+    Dish <|-- Salad
+    Dish <|-- Brownie
+    AllergenGluten <|.. CheeseBurger
+    AllergenGluten <|.. Brownie
+    AllergenNuts <|.. Brownie
+    Customer *-- Order
+    Dish --* Order
+
+    class Dish {
+        +constructor(ingredients: string[])
+        +showIngredients() string
+        +showPrice() number
+    }
+    class CheeseBurger {
+        +showPrice() number
+    }
+    class Salad {
+        +showPrice() number
+    }
+    class Brownie {
+        +showPrice() number
+    }
+    class AllergenGluten {
+        +hasGluten() boolean
+    }
+    class AllergenNuts {
+        +hasNuts() boolean
+    }
+
+    class Customer {
+        +constructor(name: string)
+        +getname() string
+        +createOrder() Order
+        +addDishToOrder(dish: Dish): void
+        +removeDishFromOrder(dish: Dish): void
+        +getOrderTotalPrice() number
+    }
+    class Order {
+        +constructor(customer: Customer, dishes: Dish[])
+        +addDish(dish: Dish): void
+        +removeDish(dish: Dish): void
+        +getTotalPrice() number
+    }
