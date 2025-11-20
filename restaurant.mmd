@@ -6,9 +6,20 @@ classDiagram
     AllergenGluten <|.. Brownie
     AllergenNuts <|.. Brownie
     Customer *-- Order
+    Customer <|.. Observer
+    Customer <|.. UpdateOrderStatus
+    Customer <|.. ManageObservers
+    Order <|.. ManageObservers
+    Order ..|> Subject
+    Kitchen <|.. UpdateOrderStatus
     Dish --* Order
+    OrderStatus --* Order
+    OrderFactory ..|> Order
+    CustomerFactory ..|> Customer
+    DishFactory ..|> Dish
 
     class Dish {
+        <<abstract>>
         +constructor(ingredients: string[])
         +showIngredients() string
         +showPrice() number
@@ -23,9 +34,11 @@ classDiagram
         +showPrice() number
     }
     class AllergenGluten {
+        <<interface>>
         +hasGluten() boolean
     }
     class AllergenNuts {
+        <<interface>>
         +hasNuts() boolean
     }
     class DishFactory {
@@ -35,20 +48,28 @@ classDiagram
     class Customer {
         +constructor(name: string)
         +getname() string
-        +createOrder() Order
         +addDishToOrder(dish: Dish): void
         +removeDishFromOrder(dish: Dish): void
         +getOrderTotalPrice() number
+        +validateOrder(): void
+        +onOrderChange(order: Order): string
     }
     class Order {
-        +constructor(customer: Customer, dishes: Dish[])
+        dishes: Dish[]
+        status: OrderStatusEnum
+        -observers: Observer[]
+        +constructor(customer: Customer)
         +addDish(dish: Dish): void
         +removeDish(dish: Dish): void
         +getTotalPrice() number
+        +validateOrder(): void
         +addObserver(observer: Observer): void
         +removeObserver(observer: Observer): void
         +notifyObservers(): void
-        +update(order: Order): void
+    }
+    class OrderStatus {
+        <<interface>>
+        +status: OrderStatusEnum
     }
     class OrderFactory {
         +createOrder(customer: Customer): Order
@@ -60,5 +81,47 @@ classDiagram
         +updateStatus(order: Order, status: OrderStatusEnum): void
     }
     class Kitchen {
-        +update(order: Order): string
+        +onOrderChange(order: Order): string
+        +updateOrderStatus(order: Order, status: OrderStatusEnum): void
     }
+    class Observer {
+        <<interface>>
+        +onOrderChange(order: Order): string
+    }
+    class Subject {
+        <<interface>>
+        +notifyObservers(): void
+    }
+    class ManageObservers {
+        <<interface>>
+        +addObserver(observer: Observer): void
+        +removeObserver(observer: Observer): void
+    }
+    class OrderStatusEnum {
+        <<enumeration>>
+        NonValidee
+        Validee
+        EnPreparation
+        Prete
+        Terminee
+    }
+    class Invoice {
+        +constructor(order: Order)
+        +generateInvoice(order: Order): string
+        +getTotalAmount(order: Order): number
+    }
+    class DiscountStrategy {
+        <<interface>>
+        +applyDiscount(order: Order): number
+    }
+    class PercentageDiscount {
+        +constructor(percentage: number)
+        +applyDiscount(order: Order): number
+    }
+    class FixedAmountDiscount {
+        +constructor(amount: number)
+        +applyDiscount(order: Order): number
+    }
+    PercentageDiscount --|> DiscountStrategy
+    FixedAmountDiscount --|> DiscountStrategy
+    Invoice ..|> DiscountStrategy
