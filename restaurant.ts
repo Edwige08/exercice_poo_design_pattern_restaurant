@@ -66,10 +66,10 @@ class Customer implements Observer {
     validateOrder(order: Order): string {
         order.addObserver(this);
         order.validateOrder();
-        return this.update(order);
+        return this.onOrderChange(order);
         // order.addObserver(new Kitchen());
     }
-    update(order: Order): string {
+    onOrderChange(order: Order): string {
         return `Votre commande est maintenant : ${order.status}`;
     }
 }
@@ -91,8 +91,12 @@ enum OrderStatusEnum {
 interface OrderStatus {
     status: OrderStatusEnum;
 }
+interface ManageObservers {
+    addObserver(observer: Observer): void;
+    removeObserver(observer: Observer): void;
+}
 
-class Order implements OrderStatus, Observer {
+class Order implements OrderStatus, Subject, ManageObservers {
     dishes: Dish[] = [];
     status: OrderStatusEnum = OrderStatusEnum.NonValidee;
     private observers: Observer[] = [];
@@ -125,15 +129,12 @@ class Order implements OrderStatus, Observer {
             this.observers.splice(index, 1);
         }
     }
-    notifyObservers(): void {
+    notifyObservers(): string | undefined {
         if (this.status === OrderStatusEnum.Validee || this.status === OrderStatusEnum.EnPreparation || this.status === OrderStatusEnum.Prete) {
             for (const observer of this.observers) {
-                observer.update(this);
+                return observer.onOrderChange(this);
             }
-        }
-    }
-    update(order: Order): string {
-        return `Votre commande est maintenant : ${order.status}`;
+        } else return '';
     }
 }
 
@@ -147,19 +148,59 @@ class OrderFactory {
 class UpdateOrderStatus {
     static updateStatus(order: Order, status: OrderStatusEnum): void {
         order.status = status;
-        order.notifyObservers();
+        // return order.notifyObservers();
     }
-    
 }
+// Question : pourquoi on met static ici ?
 
 class Kitchen implements Observer {
-    update(order: Order): string {
+    onOrderChange(order: Order): string {
         return `Commande du client "${order.customer.getname()}" est "${order.status}"`;
+    }
+    updateOrderStatus(order: Order, status: OrderStatusEnum): string {
+        UpdateOrderStatus.updateStatus(order, status);
+        return this.onOrderChange(order);
     }
 }
 
 interface Observer {
-    update(order: Order): string;
+    onOrderChange(order: Order): string;
+}
+interface Subject {
+    notifyObservers(): string | undefined;
+}
+
+class Invoice {
+    constructor(public order: Order) { }
+    generateInvoice(order: Order): string {
+        let invoice = `Invoice for ${order.customer.getname()}:\n`;
+        order.dishes.forEach((dish, index) => {
+            invoice += `${index + 1}. Dish with ingredients: ${dish.showIngredients().join(", ")} - Price: $${dish.showPrice()}\n`;
+        });
+        return invoice;
+    }
+    getTotalAmount(order: Order): number {
+        return order.getTotalPrice();
+    }
+}
+
+// abstract class Discount  {
+//     abstract applyDiscount(order: Order): number;
+// }
+interface DiscountStrategy {
+    applyDiscount(order: Order): number;
+}
+class PercentageDiscount implements DiscountStrategy {
+    constructor(private percentage: number) { }
+    applyDiscount(order: Order): number {
+        return order.getTotalPrice() * (1 - this.percentage / 100);
+    }
+}
+class FixedAmountDiscount implements DiscountStrategy {
+    constructor(private amount: number) { }
+    applyDiscount(order: Order): number {
+        return order.getTotalPrice() - this.amount;
+    }
 }
 
 const myCheeseBurger = DishFactory.createDish("CheeseBurger", ["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
@@ -173,4 +214,9 @@ console.log(order);
 // console.log(customer.getOrderTotalPrice(order));
 console.log(customer.validateOrder(order));
 const kitchen = new Kitchen();
+order.addObserver(kitchen);
 console.log(order);
+console.log(kitchen.updateOrderStatus(order, OrderStatusEnum.EnPreparation))
+console.log(order);
+const invoice = new Invoice(order);
+console.log(invoice.generateInvoice(order));
