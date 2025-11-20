@@ -48,13 +48,8 @@ class DishFactory {
     }
 }
 
-const myCheeseBurger = DishFactory.createDish("CheeseBurger", ["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
-const mySalad = DishFactory.createDish("Salad", ["laitue", "tomate", "concombre", "vinaigrette"]);
 
-console.log(mySalad.showIngredients())
-console.log(myCheeseBurger.showPrice());
-
-class Customer {
+class Customer implements Observer {
     constructor(public name: string) { }
     getname(): string {
         return this.name;
@@ -67,6 +62,15 @@ class Customer {
     }
     getOrderTotalPrice(order: Order): number {
         return order.getTotalPrice();
+    }
+    validateOrder(order: Order): string {
+        order.addObserver(this);
+        order.validateOrder();
+        return this.update(order);
+        // order.addObserver(new Kitchen());
+    }
+    update(order: Order): string {
+        return `Votre commande est maintenant : ${order.status}`;
     }
 }
 
@@ -88,9 +92,10 @@ interface OrderStatus {
     status: OrderStatusEnum;
 }
 
-class Order implements OrderStatus {
+class Order implements OrderStatus, Observer {
     dishes: Dish[] = [];
     status: OrderStatusEnum = OrderStatusEnum.NonValidee;
+    private observers: Observer[] = [];
 
     constructor(public customer: Customer) { }
 
@@ -106,6 +111,30 @@ class Order implements OrderStatus {
     getTotalPrice(): number {
         return this.dishes.reduce((total, dish) => total + dish.showPrice(), 0);
     }
+    validateOrder(): void {
+        this.status = OrderStatusEnum.Validee;
+        this.notifyObservers();
+    }
+
+    addObserver(observer: Observer): void {
+        this.observers.push(observer);
+    }
+    removeObserver(observer: Observer): void {
+        const index = this.observers.indexOf(observer);
+        if (index !== -1) {
+            this.observers.splice(index, 1);
+        }
+    }
+    notifyObservers(): void {
+        if (this.status === OrderStatusEnum.Validee || this.status === OrderStatusEnum.EnPreparation || this.status === OrderStatusEnum.Prete) {
+            for (const observer of this.observers) {
+                observer.update(this);
+            }
+        }
+    }
+    update(order: Order): string {
+        return `Votre commande est maintenant : ${order.status}`;
+    }
 }
 
 class OrderFactory {
@@ -118,17 +147,30 @@ class OrderFactory {
 class UpdateOrderStatus {
     static updateStatus(order: Order, status: OrderStatusEnum): void {
         order.status = status;
+        order.notifyObservers();
+    }
+    
+}
+
+class Kitchen implements Observer {
+    update(order: Order): string {
+        return `Commande du client "${order.customer.getname()}" est "${order.status}"`;
     }
 }
 
-const customer = CustomerFactory.createCustomer("Alice");
-console.log(customer);
-const order = OrderFactory.createOrder(customer);
-console.log(order);
+interface Observer {
+    update(order: Order): string;
+}
+
+const myCheeseBurger = DishFactory.createDish("CheeseBurger", ["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
+const mySalad = DishFactory.createDish("Salad", ["laitue", "tomate", "concombre", "vinaigrette"]);
 const burger = new CheeseBurger(["pain brioché", "steak haché de boeuf", "cheddar", "salade", "tomate", "oignon", "sauce burger"]);
-console.log(burger);
+const customer = CustomerFactory.createCustomer("Alice");
+const order = OrderFactory.createOrder(customer);
 customer.addDishToOrder(order, burger);
+customer.addDishToOrder(order, mySalad);
 console.log(order);
-customer.addDishToOrder(order, myCheeseBurger);
+// console.log(customer.getOrderTotalPrice(order));
+console.log(customer.validateOrder(order));
+const kitchen = new Kitchen();
 console.log(order);
-console.log(customer.getOrderTotalPrice(order));

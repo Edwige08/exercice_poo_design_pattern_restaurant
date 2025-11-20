@@ -45,10 +45,20 @@ classDiagram
         +addDish(dish: Dish): void
         +removeDish(dish: Dish): void
         +getTotalPrice() number
+        +addObserver(observer: Observer): void
+        +removeObserver(observer: Observer): void
+        +notifyObservers(): void
+        +update(order: Order): void
     }
     class OrderFactory {
         +createOrder(customer: Customer): Order
     }
     class CustomerFactory {
         +createCustomer(name: string): Customer
+    }
+    class UpdateOrderStatus {
+        +updateStatus(order: Order, status: OrderStatusEnum): void
+    }
+    class Kitchen {
+        +update(order: Order): string
     }
